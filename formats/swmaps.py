@@ -45,7 +45,7 @@ class PNEZDFile:
     @classmethod
     def print_header(cls, project_name: str) -> None:
         timestamp = datetime.datetime.now().isoformat()
-        print(f"P,N,E,Z,D,{project_name},{timestamp}")
+        print(f"#P,N,E,Z,D,{project_name},{timestamp}")
 
     @classmethod
     def print_line(cls, p: PointPNEZD) -> None:
