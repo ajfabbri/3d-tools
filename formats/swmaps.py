@@ -48,8 +48,11 @@ class PNEZDFile:
         print(f"#P,N,E,Z,D,{project_name},{timestamp}")
 
     @classmethod
-    def print_line(cls, p: PointPNEZD) -> None:
-        print(f"{p.point},{p.northing},{p.easting},{p.elevation_m},{p.description}")
+    def print_line(cls, p: PointPNEZD, convert_to_feet:bool=False) -> None:
+        elevation = p.elevation_m
+        if convert_to_feet:
+            elevation = elevation * 3.28084
+        print(f"{p.point},{p.northing},{p.easting},{elevation},{p.description}")
 
     @classmethod
     def print_file(cls, points: list[PointPNEZD], project_name:str="PROJECT1") -> None:
@@ -95,6 +98,7 @@ def main():
                     description = 'Convert SW Maps point files to PNEZD format',
                     epilog= 'Reads from stdin, writes to stdout.')
     parser.add_argument("--verbose", help="Print verbose output to stderr", action='store_true')
+    parser.add_argument("--meter-to-ft", help="Translate elevations from meters to feet", action='store_true')
     args = parser.parse_args()
 
     reader = SWMaps()
@@ -102,7 +106,9 @@ def main():
         reader.verbose = True
     
     points = reader.parse_points_csv()
-    PNEZDFile.print_file(points)
+    PNEZDFile.print_header("PROJECT_NAME")
+    for p in points:
+        PNEZDFile.print_line(p, convert_to_feet=args.meter_to_ft)
 
 
 if __name__ == "__main__":
