@@ -31,7 +31,7 @@ import argparse
 import datetime
 import re
 import sys
-from typing import ClassVar, NamedTuple
+from typing import NamedTuple
 
 
 class PointPNEZD (NamedTuple):
@@ -52,7 +52,7 @@ class PNEZDFile:
         print(f"{p.point},{p.northing},{p.easting},{p.elevation_m},{p.description}")
 
     @classmethod
-    def print_file(cls, points: list[PointPNEZD], project_name="PROJECT1") -> None:
+    def print_file(cls, points: list[PointPNEZD], project_name:str="PROJECT1") -> None:
         cls.print_header(project_name)
         for p in points:
             cls.print_line(p)
