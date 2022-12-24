@@ -33,6 +33,7 @@ import re
 import sys
 from typing import NamedTuple
 
+METER_PER_US_SURVEY_FT = 0.30480061
 
 class PointPNEZD (NamedTuple):
     point: int
@@ -51,7 +52,7 @@ class PNEZDFile:
     def print_line(cls, p: PointPNEZD, convert_to_feet:bool=False) -> None:
         elevation = p.elevation_m
         if convert_to_feet:
-            elevation = elevation * 3.28084
+            elevation = elevation / METER_PER_US_SURVEY_FT
         print(f"{p.point},{p.northing},{p.easting},{elevation},{p.description}")
 
     @classmethod
