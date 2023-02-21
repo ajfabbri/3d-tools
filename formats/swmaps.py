@@ -79,17 +79,17 @@ class SWMaps:
         for l in sys.stdin:
             if not found_header and self.header_re.match(l):
                 found_header = True
-            if found_header:
-                m = self.line_re.match(l)
-                if not m:
-                    self.vprint("Ignoring unexpected line: " + l)
-                else:
-                    point_id = int(m.group(1))
-                    easting = float(m.group(2))
-                    northing = float(m.group(3))
-                    z_m = float(m.group(4))
-                    descr = m.group(5)
-                    points.append(PointPNEZD(point_id, northing, easting, z_m, descr))
+                continue
+            m = self.line_re.match(l)
+            if not m:
+                self.vprint("Ignoring unexpected line: " + l)
+            else:
+                point_id = int(m.group(1))
+                easting = float(m.group(2))
+                northing = float(m.group(3))
+                z_m = float(m.group(4))
+                descr = m.group(5)
+                points.append(PointPNEZD(point_id, northing, easting, z_m, descr))
         self.vprint(f"Parsed {len(points)} point records.")
         return points
 
