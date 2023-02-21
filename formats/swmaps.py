@@ -66,7 +66,7 @@ class SWMaps:
         self.verbose = False
         self.header_re = re.compile("ID,Geometry,Remarks,")
         # matches are P,E,N,Z,D
-        cols_pattern = "(.*),POINT Z \\((.*) (.*) (.*)\\),(.*),"
+        cols_pattern = "(.*),POINT Z \\((.*) (.*) (.*)\\),(.*)[,]?"
         self.line_re = re.compile(cols_pattern)
     
     def vprint(self, *args:str, **kwargs:str):
