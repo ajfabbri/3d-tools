@@ -73,7 +73,7 @@ class SWMaps:
         if self.verbose:
             print(*args, **kwargs, file=sys.stderr)
         
-    def parse_points_csv(self) -> list[PointPNEZD]:
+    def parse_points_csv(self, point_offset:int=0) -> list[PointPNEZD]:
         found_header = False
         points: list[PointPNEZD] = []
         for l in sys.stdin:
@@ -84,7 +84,7 @@ class SWMaps:
             if not m:
                 self.vprint("Ignoring unexpected line: " + l)
             else:
-                point_id = int(m.group(1))
+                point_id = int(m.group(1)) + point_offset
                 easting = float(m.group(2))
                 northing = float(m.group(3))
                 z_m = float(m.group(4))
@@ -100,13 +100,14 @@ def main():
                     epilog= 'Reads from stdin, writes to stdout.')
     parser.add_argument("--verbose", help="Print verbose output to stderr", action='store_true')
     parser.add_argument("--meter-to-ft", help="Translate elevations from meters to feet", action='store_true')
+    parser.add_argument("--renumber", help="Add value to point numbers.", action='store', default=0)
     args = parser.parse_args()
 
     reader = SWMaps()
     if args.verbose:
         reader.verbose = True
     
-    points = reader.parse_points_csv()
+    points = reader.parse_points_csv(int(args.renumber))
     PNEZDFile.print_header("PROJECT_NAME")
     for p in points:
         PNEZDFile.print_line(p, convert_to_feet=args.meter_to_ft)
