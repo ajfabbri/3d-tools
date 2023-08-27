@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
 
 # Tool to translate "csv" files output by SW Maps (android gps mapping app) to a
-# proper PNEZD format, which can be used by tools like Civil3D.
+# PNEZD-style lat/long format, which can be used by tools like Civil3D.
 
 # input (sw maps point file) format:
 # ID,Geometry,Remarks,
-# 6,POINT Z (-129.83559303 52.37266082 1519.457),rebar cone top,
-# 7,POINT Z (-129.83556155 52.37272424 1519.674),pt,
+# 6,POINT Z (-119.83559303 52.37266082 1519.457),rebar cone top,
+# 7,POINT Z (-119.83556155 52.37272424 1519.674),pt,
+
+# 2023 Aug: Format has changed:
+# 54,08/25/2023 12:43:39.500 PDT,pto,POINT Z (-112.83461149 39.57328935 1510.741),39.573289348,-119.834611492,1510.741,1534.672,2.050,4,0.001,0.0,0.010,0.010
+
 # Geometry field looks like the 3-tuple E,N,Z(in meters),D
 
 # output format: (ref: https://www.eyascopublic.com/mehelp/index.html#!Documents/surveypnezdfileformat.htm)
 # P,N,E,Z,D,PROJECT1,2020-07-21 12:00
 # 8,2871835.803,6235770.127,112.214,FND
-# 200,880332.631,6241504.876,314.337,MON
-
 # The single header line contains the column identifiers for the data as well as
-# the project tag and event date.  The PNEZD column indicators can be in any
-# order but must reflect the order of the data in each line.  They must be
-# followed by the project name and finally the event date of data.
-
+# the project tag and event date. 
 # 1)  P – Point indicator
-# 2)  N – Northing value
-# 3)  E – Easting value
-# 4)  Z – Elevation value
-# 5)  D – Description value
+# 2)  N – Northing / Latitude
+# 3)  E – Easting / Lon.
+# 4)  Z – Elevation
+# 5)  D – Description
 # 6)  PROJECT1 – this is the project name value for the entire file
 # 7)  Date – this is the event date for the data in the file and should be in international format (yyyy-mm-dd hh:nn:ss)
 
@@ -34,6 +33,10 @@ import sys
 from typing import NamedTuple
 
 METER_PER_US_SURVEY_FT = 0.30480061
+METER_PER_FT = 0.3048
+
+# Not official version, just increment when it changes
+FORMAT_VER = 2
 
 class PointPNEZD (NamedTuple):
     point: int
@@ -66,7 +69,12 @@ class SWMaps:
         self.verbose = False
         self.header_re = re.compile("ID,Geometry,Remarks,")
         # matches are P,E,N,Z,D
-        cols_pattern = "(.*),POINT Z \\((.*) (.*) (.*)\\),(.*)[,]?"
+        if FORMAT_VER == 1:
+            cols_pattern = "(.*),POINT Z \\((.*) (.*) (.*)\\),(.*)[,]?"
+        else :
+            f = "[^,]*"
+# 54,08/25/2023 12:43:39.500 PDT,pto,POINT Z (-112.83461149 39.57328935 1510.741),39.573289348,-119.834611492,1510.741,1534.672,2.050,4,0.001,0.0,0.010,0.010
+            cols_pattern = f"([0-9]+),{f},({f}),POINT Z \\(({f}) ({f}) ({f})\\),{f},{f},{f},({f})" + f",{f}" * 5
         self.line_re = re.compile(cols_pattern)
     
     def vprint(self, *args:str, **kwargs:str):
@@ -85,10 +93,19 @@ class SWMaps:
                 self.vprint("Ignoring unexpected line: " + l)
             else:
                 point_id = int(m.group(1)) + point_offset
-                easting = float(m.group(2))
-                northing = float(m.group(3))
-                z_m = float(m.group(4))
-                descr = m.group(5)
+                if FORMAT_VER == 1:
+                    # older format
+                    easting = float(m.group(2))
+                    northing = float(m.group(3))
+                    z_m = float(m.group(4))
+                    descr = m.group(5)
+                else:
+                    descr = m.group(2)
+                    easting = float(m.group(3))
+                    northing = float(m.group(4))
+                    # this is ellipsoidal, we want orthometric: float(m.group(5))
+                    z_m = float(m.group(6))
+
                 points.append(PointPNEZD(point_id, northing, easting, z_m, descr))
         self.vprint(f"Parsed {len(points)} point records.")
         return points
